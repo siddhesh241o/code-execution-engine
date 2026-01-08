@@ -9,7 +9,7 @@ type Status int
 
 const(
 	StatusSuccessfullyExecuted Status = iota
-	StatusRuntimeError
+	StatusError
 	StatusTLE 
 	StatusMLE
 	StatusSystemError
@@ -18,7 +18,7 @@ const(
 func(s Status) String() string {
 	return [...]string{
 		"Successfully Executed",
-		"Runtime Error",
+		"Error",
 		"Time Limit Exceeded", 
 		"Memory Limit",
 		"System Error",
