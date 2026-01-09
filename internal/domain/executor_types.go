@@ -5,39 +5,41 @@ import (
 	"time"
 )
 
-type Status int 
+type Status int
 
-const(
+const (
 	StatusSuccessfullyExecuted Status = iota
-	StatusError
-	StatusTLE 
+	StatusCompileError
+	StatusRuntimeError
+	StatusTLE
 	StatusMLE
 	StatusSystemError
 )
 
-func(s Status) String() string {
+func (s Status) String() string {
 	return [...]string{
 		"Successfully Executed",
-		"Error",
-		"Time Limit Exceeded", 
+		"Compilation Error",
+		"Runtime Error",
+		"Time Limit Exceeded",
 		"Memory Limit",
 		"System Error",
 	}[s]
 }
 
 type ExecutionRequest struct {
-	Code string
+	Code     string
 	Language string
+	Input    string
 }
 
 type ExecutionResponse struct {
-	Stdout string 
-	Stderr string
+	Stdout   string
+	Stderr   string
 	Duration time.Duration
-	Status 
+	Status
 }
 
 type CodeExecutor interface {
 	Execute(ctx context.Context, req ExecutionRequest) (*ExecutionRequest, error)
 }
-

@@ -6,8 +6,7 @@ import (
 	"path/filepath"
 )
 
-type FileManager struct{
-
+type FileManager struct {
 }
 
 func NewFileManager() *FileManager {
@@ -19,7 +18,7 @@ func (fm *FileManager) CreateWorkspace(code string, filename string) (string, fu
 	if err != nil {
 		return "", nil, fmt.Errorf("failed to created tmp directory: %v", err)
 	}
-	cleanup := func(){
+	cleanup := func() {
 		os.RemoveAll(workdir)
 	}
 

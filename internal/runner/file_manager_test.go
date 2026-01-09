@@ -6,26 +6,26 @@ import (
 	"testing"
 )
 
-func TestCreateWorkspace(t *testing.T){
-	tests := []struct{
-		name string 
-		code string 
+func TestCreateWorkspace(t *testing.T) {
+	tests := []struct {
+		name     string
+		code     string
 		filename string
 	}{
 		{
-			name: "Python Test",
-			code: "print('hello')",
+			name:     "Python Test",
+			code:     "print('hello')",
 			filename: "main.py",
 		},
 		{
-			name: "Empty File",
-			code: "",
+			name:     "Empty File",
+			code:     "",
 			filename: "main.py",
 		},
 	}
 	fm := NewFileManager()
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T){
+		t.Run(test.name, func(t *testing.T) {
 			workdir, cleanup, err := fm.CreateWorkspace(test.code, test.filename)
 			if err != nil {
 				t.Fatalf("failed creating a workspace: %v", err)

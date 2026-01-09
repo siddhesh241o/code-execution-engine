@@ -3,18 +3,35 @@ package runner
 import "fmt"
 
 type LanguageConfig struct {
-	Image       string
-	Command     []string
-	SourceFile  string
-	MemoryLimit int64
+	Image      string
+	Command    []string
+	SourceFile string
 }
 
 var supportedLanguages = map[string]LanguageConfig{
 	"python": {
-		Image:       "python:3.12-alpine",
-		Command:     []string{"python", "/code/main.py"},
-		SourceFile:  "main.py",
-		MemoryLimit: 0,
+		Image:      "engine-python",
+		SourceFile: "solution.py",
+		Command: []string{
+			"sh", "-c",
+			"/usr/bin/time -v -o metrics.txt python3 -u solution.py",
+		},
+	},
+	"c++": {
+		Image: "engine-cpp",
+		Command: []string{
+			"sh", "-c",
+			"g++ main.cpp -o app && /usr/bin/time -v -o metrics.txt ./app",
+		},
+		SourceFile: "main.cpp",
+	},
+	"java": {
+		Image: "engine-java",
+		Command: []string{
+			"sh", "-c",
+			"javac Main.java && /usr/bin/time -v -o metrics.txt java -Xmx100M -cp . Main",
+		},
+		SourceFile: "Main.java",
 	},
 }
 
