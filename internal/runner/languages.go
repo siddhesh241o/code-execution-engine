@@ -33,6 +33,14 @@ var supportedLanguages = map[string]LanguageConfig{
 		},
 		SourceFile: "Main.java",
 	},
+	"javascript": {
+		Image: "engine-node",
+		Command: []string{
+			"sh", "-c",
+			"/usr/bin/time -v -o metrics.txt node solution.js",
+		},
+		SourceFile: "solution.js",
+	},
 }
 
 func GetLanguageConfig(language string) (LanguageConfig, error) {

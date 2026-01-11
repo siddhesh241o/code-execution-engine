@@ -28,16 +28,17 @@ func (s Status) String() string {
 }
 
 type ExecutionRequest struct {
-	Code     string
-	Language string
-	Input    string
+	Code     string `json:"code" binding:"required"`
+	Language string `json:"language" binding:"required"`
+	Input    string `json:"input"`
 }
 
 type ExecutionResponse struct {
-	Stdout   string
-	Stderr   string
-	Duration time.Duration
-	Status
+	Stdout   string        `json:"stdout"`
+	Stderr   string        `json:"stderr"`
+	Duration time.Duration `json:"time_ms"`
+	Memory   int64         `json:"memory_kb"`
+	Status   `json:"status"`
 }
 
 type CodeExecutor interface {

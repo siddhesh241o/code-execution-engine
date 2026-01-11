@@ -112,6 +112,28 @@ func TestDockerExecutor_Execute_Integration(t *testing.T) {
 			expectedStatus: domain.StatusSuccessfullyExecuted,
 			containsStdout: "Hello Siddhesh",
 		},
+		{
+			name: "Node.js Success with Input",
+			req: domain.ExecutionRequest{
+				Language: "javascript",
+				Code: `
+					const fs = require('fs');
+					const input = fs.readFileSync(0, 'utf8').trim();
+					console.log("Node received: " + input);
+				`,
+				Input: "Siddhesh",
+			},
+			expectedStatus: domain.StatusSuccessfullyExecuted,
+			containsStdout: "Node received: Siddhesh",
+		},
+		{
+			name: "Node.js Runtime Error",
+			req: domain.ExecutionRequest{
+				Language: "javascript",
+				Code:     `throw new Error("Something went wrong");`,
+			},
+			expectedStatus: domain.StatusRuntimeError,
+		},
 	}
 
 	for _, tt := range tests {

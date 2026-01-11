@@ -30,6 +30,9 @@ var javaDockerfile string
 //go:embed images/python.Dockerfile
 var pythonDockerfile string
 
+//go:embed images/node.Dockerfile
+var nodeDockerfile string
+
 type DockerExecutor struct {
 	cli *client.Client
 	fm  *FileManager
@@ -56,6 +59,7 @@ func (de *DockerExecutor) ensureCustomImages() {
 		"engine-cpp":    cppDockerfile,
 		"engine-java":   javaDockerfile,
 		"engine-python": pythonDockerfile,
+		"engine-node":   nodeDockerfile,
 	}
 	ctx := context.Background()
 	for name, content := range images {
@@ -263,7 +267,8 @@ func (de *DockerExecutor) Execute(ctx context.Context, req domain.ExecutionReque
 	return &domain.ExecutionResponse{
 		Stdout:   result.Stdout,
 		Stderr:   result.Stderr,
-		Duration: duration,
+		Duration: time.Duration(duration.Milliseconds()),
+		Memory:   memoryKB,
 		Status:   de.determineStatus(result.Inspect, result.ctxError, memoryKB),
 	}, nil
 }
