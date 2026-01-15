@@ -146,7 +146,7 @@ func TestDockerExecutor_Execute_Integration(t *testing.T) {
 			}
 
 			fmt.Printf("stderr:%v, stdout:%v", res.Stderr, res.Stdout)
-			if res.Status != tt.expectedStatus {
+			if res.Status != tt.expectedStatus.String() {
 				t.Errorf("Expected status %v, got %v", tt.expectedStatus, res.Status)
 			}
 			if tt.containsStdout != "" && !strings.Contains(res.Stdout, tt.containsStdout) {

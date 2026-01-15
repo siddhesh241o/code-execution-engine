@@ -151,9 +151,9 @@ func (de *DockerExecutor) runInContainer(ctx context.Context, languageConfig Lan
 	hostConfig := container.HostConfig{
 		Binds: []string{workdir + ":/code"},
 		Resources: container.Resources{
-			Memory:     128 * 1024 * 1024,
+			Memory:     512 * 1024 * 1024,
 			NanoCPUs:   500000000,
-			MemorySwap: 128 * 1024 * 1024,
+			MemorySwap: 512 * 1024 * 1024,
 			PidsLimit:  &limit,
 		},
 	}
@@ -258,7 +258,7 @@ func (de *DockerExecutor) Execute(ctx context.Context, req domain.ExecutionReque
 		return &domain.ExecutionResponse{
 			Stdout: result.Stdout,
 			Stderr: result.Stderr,
-			Status: domain.StatusCompileError,
+			Status: domain.StatusCompileError.String(),
 		}, nil
 	}
 
@@ -269,6 +269,6 @@ func (de *DockerExecutor) Execute(ctx context.Context, req domain.ExecutionReque
 		Stderr:   result.Stderr,
 		Duration: time.Duration(duration.Milliseconds()),
 		Memory:   memoryKB,
-		Status:   de.determineStatus(result.Inspect, result.ctxError, memoryKB),
+		Status:   de.determineStatus(result.Inspect, result.ctxError, memoryKB).String(),
 	}, nil
 }
