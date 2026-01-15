@@ -151,9 +151,9 @@ func (de *DockerExecutor) runInContainer(ctx context.Context, languageConfig Lan
 	hostConfig := container.HostConfig{
 		Binds: []string{workdir + ":/code"},
 		Resources: container.Resources{
-			Memory:     512 * 1024 * 1024,
+			Memory:     256 * 1024 * 1024,
 			NanoCPUs:   500000000,
-			MemorySwap: 512 * 1024 * 1024,
+			MemorySwap: 256 * 1024 * 1024,
 			PidsLimit:  &limit,
 		},
 	}
