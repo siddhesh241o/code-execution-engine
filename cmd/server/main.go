@@ -31,6 +31,7 @@ func main() {
 	executionHandler := api.NewExecutionHandler(queue, store)
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/execute", executionHandler.HandleExecuteCode)
+	mux.HandleFunc("GET /api/result/{id}", executionHandler.HandleGetResult)
 	log.Println("Server started at 5005")
 	http.ListenAndServe(":5005", enableCORS(mux))
 }

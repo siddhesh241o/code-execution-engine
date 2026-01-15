@@ -37,6 +37,7 @@ func workerLoop(workerId int, queue *infraRedis.RedisQueue, store *infraRedis.Re
 		if err = store.Set(ctx, *result); err != nil {
 			log.Printf("Worker_%d failed to save result for job_%s: %v", workerId, job.ID, err)
 		}
+		log.Printf("Worker_%d completed job_%s", workerId, job.ID)
 	}
 }
 

@@ -50,3 +50,22 @@ func (h *ExecutionHandler) HandleExecuteCode(w http.ResponseWriter, r *http.Requ
 		"status": "Queued",
 	})
 }
+
+func (h *ExecutionHandler) HandleGetResult(w http.ResponseWriter, r *http.Request) {
+	jobID := r.PathValue("id")
+	result, err := h.Store.Get(r.Context(), jobID)
+	if err != nil {
+		http.Error(w, "result store failed "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if result == nil {
+		json.NewEncoder(w).Encode(map[string]string{
+			"job_id": jobID,
+			"status": "Processing",
+		})
+		return
+	}
+	json.NewEncoder(w).Encode(result)
+}
