@@ -33,6 +33,10 @@ var pythonDockerfile string
 //go:embed images/node.Dockerfile
 var nodeDockerfile string
 
+const(
+	MaxLogSize = 10*1024
+)
+
 type DockerExecutor struct {
 	cli *client.Client
 	fm  *FileManager
@@ -215,17 +219,14 @@ func (de *DockerExecutor) runInContainer(ctx context.Context, languageConfig Lan
 		return nil, fmt.Errorf("failed to inspect container: %v", err)
 	}
 
-	var outBuf, errBuf bytes.Buffer
-	logs, err := de.cli.ContainerLogs(context.Background(), resp.ID, client.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
+	stdout, stderr, err := de.getOutputLogs(resp.ID)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get exection logs: %v", err)
+		return nil, err
 	}
-
-	_, _ = stdcopy.StdCopy(&outBuf, &errBuf, logs)
-	logs.Close()
+	
 	return &runResult{
-		Stdout:   outBuf.String(),
-		Stderr:   errBuf.String(),
+		Stdout:   stdout,
+		Stderr:   stderr,
 		Inspect:  inspect,
 		ctxError: runCtx.Err(),
 	}, nil
@@ -271,4 +272,43 @@ func (de *DockerExecutor) Execute(ctx context.Context, req domain.ExecutionReque
 		Memory:   memoryKB,
 		Status:   de.determineStatus(result.Inspect, result.ctxError, memoryKB).String(),
 	}, nil
+}
+
+type LimitedWriter struct {
+	W io.Writer
+	N int64
+}
+
+func (l *LimitedWriter) Write(p []byte) (int, error) {
+	if l.N <= 0 {
+		return len(p), nil
+	}
+	if int64(len(p)) > l.N {
+		p = p[:l.N]
+	}
+	n, err := l.W.Write(p)
+	l.N -= int64(n)
+	return n, err
+}
+
+func (de *DockerExecutor) getOutputLogs(containerID string) (stdout string, stderr string,err error) {
+	var outBuf, errBuf bytes.Buffer
+	outLimiter := &LimitedWriter{W: &outBuf, N: MaxLogSize}
+	errLimiter := &LimitedWriter{W: &errBuf, N: MaxLogSize}
+	logs, err := de.cli.ContainerLogs(context.Background(), containerID, client.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
+	if err != nil {
+		return "","", fmt.Errorf("failed to get exection logs: %v", err)
+	}
+	_, _ = stdcopy.StdCopy(outLimiter, errLimiter, logs)
+
+	stdout = outBuf.String()
+	if outLimiter.N <= 0 {
+		stdout += "\n[OUTPUT TRUNCATED]"
+	}
+	stderr = errBuf.String()
+	if errLimiter.N <= 0 {
+		stderr += "\n[ERROR LOG TRUNCATED]"
+	}
+	logs.Close()
+	return
 }
