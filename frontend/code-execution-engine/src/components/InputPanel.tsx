@@ -20,7 +20,7 @@ export function InputPanel ({
             </div>
             <div className="p-4">
                 <textarea 
-                    className="field w-full resize-y font-mono leading-6"
+                    className="input-area w-full resize-y font-mono leading-6"
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     readOnly={readOnly}

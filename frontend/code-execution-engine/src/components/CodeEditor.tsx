@@ -1,3 +1,6 @@
+import Editor from '@monaco-editor/react'
+import type { editor } from 'monaco-editor'
+
 type Language = 'python' | 'cpp' | 'javascript'
 
 interface CodeEditorProps {
@@ -9,6 +12,20 @@ interface CodeEditorProps {
     title?: string
 }
 
+const monacoLanguageMap: Record<Language, string> = {
+    python: 'python',
+    cpp: 'cpp',
+    javascript: 'javascript',
+}
+
+const editorOptions: editor.IStandaloneEditorConstructionOptions = {
+    lineNumbers: 'on',
+    autoIndent: 'full',
+    autoClosingBrackets: 'always',
+    bracketPairColorization: { enabled: true },
+    guides: { bracketPairs: true },
+}
+
 export function CodeEditor({
     value,
     onChange, 
@@ -17,6 +34,8 @@ export function CodeEditor({
     readOnly = false, 
     title = 'Code Editor'
 }: CodeEditorProps) {
+    const monacoLanguage = monacoLanguageMap[language]
+
     return (
         <div className="panel overflow-hidden">
             <div className="panel-head">
@@ -31,13 +50,13 @@ export function CodeEditor({
                     <option value="javascript">Javascript</option>
                 </select>
             </div>
-            <textarea
-            className="editor-area"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            readOnly={readOnly}
-            spellCheck={false}
-            placeholder='Write your code here...'
+            <Editor
+                height="420px"
+                theme="vs-dark"
+                language={monacoLanguage}
+                value={value}
+                options={{ ...editorOptions, readOnly }}
+                onChange={(updatedValue) => onChange(updatedValue ?? '')}
             />
         </div>
     )
