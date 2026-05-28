@@ -30,6 +30,9 @@ func main() {
 	redisAddr := os.Getenv("REDIS_ADDR")
 	ttlStr := os.Getenv("RESULT_TTL")
 	ttl, err := time.ParseDuration(ttlStr)
+	if err != nil {
+		log.Fatalf("invalid RESULT_TTL: %v", err)
+	}
 	port := os.Getenv("HTTP_PORT")
 
 	rdb, err := redis.NewRedisClient(redisAddr)

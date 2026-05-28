@@ -11,7 +11,6 @@ import (
 	"github.com/joho/godotenv"
 	"github.com/moby/moby/client"
 	"github.com/siddhesh241o/code-execution-engine/internal/domain"
-	"github.com/siddhesh241o/code-execution-engine/internal/infrastructure/redis"
 	infraRedis "github.com/siddhesh241o/code-execution-engine/internal/infrastructure/redis"
 	"github.com/siddhesh241o/code-execution-engine/internal/runner"
 )
@@ -62,8 +61,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("redis client creation failed: %v", err)
 	}
-	queue := redis.NewRedisQueue(rdb)
-	store := redis.NewRedisResultStore(rdb, ttl)
+	queue := infraRedis.NewRedisQueue(rdb)
+	store := infraRedis.NewRedisResultStore(rdb, ttl)
 	dc, err := client.New(client.FromEnv)
 	if err != nil {
 		log.Fatalf("docker client creation failed: %v", err)
