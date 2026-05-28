@@ -3,9 +3,12 @@ package main
 import (
 	"context"
 	"log"
+	"os"
+	"strconv"
 	"sync"
 	"time"
 
+	"github.com/joho/godotenv"
 	"github.com/moby/moby/client"
 	"github.com/siddhesh241o/code-execution-engine/internal/domain"
 	"github.com/siddhesh241o/code-execution-engine/internal/infrastructure/redis"
@@ -13,7 +16,7 @@ import (
 	"github.com/siddhesh241o/code-execution-engine/internal/runner"
 )
 
-const (
+var (
 	WorkerCount = 4
 )
 
@@ -42,12 +45,25 @@ func workerLoop(workerId int, queue *infraRedis.RedisQueue, store *infraRedis.Re
 }
 
 func main() {
-	rdb, err := infraRedis.NewRedisClient("localhost:6379")
+	_ = godotenv.Load()
+	redisAddr := os.Getenv("REDDIS_ADDR")
+	ttlStr := os.Getenv("RESULT_TTL")
+	if wc := os.Getenv("WORKER_COUNT"); wc != "" {
+		if n, err := strconv.Atoi(wc); err == nil && n > 0 {
+			WorkerCount = n
+		}
+	}
+	ttl, err := time.ParseDuration(ttlStr)
+
+	if err != nil {
+		log.Fatalf("invalid RESULT_TTL: %v", err)
+	}
+	rdb, err := infraRedis.NewRedisClient(redisAddr)
 	if err != nil {
 		log.Fatalf("redis client creation failed: %v", err)
 	}
 	queue := redis.NewRedisQueue(rdb)
-	store := redis.NewRedisResultStore(rdb, time.Minute*5)
+	store := redis.NewRedisResultStore(rdb, ttl)
 	dc, err := client.New(client.FromEnv)
 	if err != nil {
 		log.Fatalf("docker client creation failed: %v", err)

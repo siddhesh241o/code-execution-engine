@@ -33,8 +33,8 @@ var pythonDockerfile string
 //go:embed images/node.Dockerfile
 var nodeDockerfile string
 
-const(
-	MaxLogSize = 10*1024
+const (
+	MaxLogSize = 10 * 1024
 )
 
 type DockerExecutor struct {
@@ -223,7 +223,7 @@ func (de *DockerExecutor) runInContainer(ctx context.Context, languageConfig Lan
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &runResult{
 		Stdout:   stdout,
 		Stderr:   stderr,
@@ -291,13 +291,13 @@ func (l *LimitedWriter) Write(p []byte) (int, error) {
 	return n, err
 }
 
-func (de *DockerExecutor) getOutputLogs(containerID string) (stdout string, stderr string,err error) {
+func (de *DockerExecutor) getOutputLogs(containerID string) (stdout string, stderr string, err error) {
 	var outBuf, errBuf bytes.Buffer
 	outLimiter := &LimitedWriter{W: &outBuf, N: MaxLogSize}
 	errLimiter := &LimitedWriter{W: &errBuf, N: MaxLogSize}
 	logs, err := de.cli.ContainerLogs(context.Background(), containerID, client.ContainerLogsOptions{ShowStdout: true, ShowStderr: true})
 	if err != nil {
-		return "","", fmt.Errorf("failed to get exection logs: %v", err)
+		return "", "", fmt.Errorf("failed to get exection logs: %v", err)
 	}
 	_, _ = stdcopy.StdCopy(outLimiter, errLimiter, logs)
 

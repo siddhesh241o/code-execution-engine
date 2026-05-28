@@ -45,15 +45,19 @@ type ExecutionResponse struct {
 }
 
 type CodeExecutor interface {
-	Execute(ctx context.Context, req ExecutionRequest) (*ExecutionRequest, error)
+	Execute(ctx context.Context, req ExecutionRequest) (*ExecutionResponse, error)
 }
 
-type QueueProvider interface {
-	Push(ctx context.Context, e ExecutionRequest) error
+type SubmissionDispatcher interface {
+	Dispatch(ctx context.Context, req ExecutionRequest) error
+}
+
+type JobQueue interface {
+	Push(ctx context.Context, req ExecutionRequest) error
 	Pop(ctx context.Context) (ExecutionRequest, error)
 }
 
-type ResultStore interface {
+type JobStateStore interface {
 	Set(ctx context.Context, res ExecutionResponse) error
 	Get(ctx context.Context, id string) (*ExecutionResponse, error)
 }

@@ -11,12 +11,12 @@ import (
 )
 
 type ExecutionHandler struct {
-	Queue domain.QueueProvider
-	Store domain.ResultStore
+	Dispatcher domain.SubmissionDispatcher
+	Store      domain.JobStateStore
 }
 
-func NewExecutionHandler(q domain.QueueProvider, s domain.ResultStore) *ExecutionHandler {
-	return &ExecutionHandler{Queue: q, Store: s}
+func NewExecutionHandler(d domain.SubmissionDispatcher, s domain.JobStateStore) *ExecutionHandler {
+	return &ExecutionHandler{Dispatcher: d, Store: s}
 }
 
 func (h *ExecutionHandler) HandleExecuteCode(w http.ResponseWriter, r *http.Request) {
@@ -37,10 +37,9 @@ func (h *ExecutionHandler) HandleExecuteCode(w http.ResponseWriter, r *http.Requ
 		Input:     req.Input,
 		CreatedAt: time.Now(),
 	}
-
-	err := h.Queue.Push(r.Context(), executionJob)
+	err := h.Dispatcher.Dispatch(r.Context(), executionJob)
 	if err != nil {
-		http.Error(w, "failed to queue jo: "+err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Submission failed to dispatch: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	w.Header().Set("Content-type", "application/json")
