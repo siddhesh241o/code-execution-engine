@@ -6,11 +6,11 @@ on:
       message:
         description: A message from Go script
         required: true
-        default: 'Hello World'
+        default: "Hello World"
 
 jobs:
   print-message:
     runs-on: ubuntu-latest
     steps:
-      - name: Show Message 
-        run: echo "The server sent: ${{github.event.inputs.message}}"
+      - name: Show Message
+        run: echo "The server sent: ${{ github.event.inputs.message }}"
