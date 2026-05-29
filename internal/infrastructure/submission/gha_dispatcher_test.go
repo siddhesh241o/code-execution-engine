@@ -16,6 +16,13 @@ func TestDispatch(t *testing.T) {
 		Ref:      os.Getenv("GITHUB_REF"),
 		Token:    os.Getenv("GITHUB_TOKEN"),
 	}
+
+	t.Logf("owner=%q repo=%q workflow=%q ref=%q", ghc.Owner, ghc.Repo, ghc.Workflow, ghc.Ref)
+
+    if ghc.Owner == "" || ghc.Repo == "" || ghc.Workflow == "" || ghc.Ref == "" || ghc.Token == "" {
+        t.Fatalf("missing github config")
+    }
+	
 	dispatcher, err := NewGitHubActionsSubmissionDispatcher(ghc, nil)
 	if err != nil {
 		t.Fatalf("failed to create dispatcher: %v", err)
