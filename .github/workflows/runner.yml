@@ -13,4 +13,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Show Message
-        run: echo "The server sent: ${{ inputs.message }}"
+        run: |
+          echo "The server sent: ${{ inputs.message }}"
