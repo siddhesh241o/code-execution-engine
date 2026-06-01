@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/siddhesh241o/code-execution-engine/internal/domain"
@@ -20,6 +19,10 @@ type GithubActionsConfig struct {
 	Ref      string
 	Token    string
 	BaseURL  string
+	FetchURL string 
+	CallbackURL string 
+	FetchSecret string 
+	CallbackSecret string
 }
 
 type GithubActionsDispatcher struct {
@@ -28,24 +31,7 @@ type GithubActionsDispatcher struct {
 }
 
 func NewGitHubActionsSubmissionDispatcher(cfg GithubActionsConfig, client *http.Client) (*GithubActionsDispatcher, error) {
-	if strings.TrimSpace(cfg.Owner) == "" {
-		return nil, fmt.Errorf("github owner is required")
-	}
-	if strings.TrimSpace(cfg.Repo) == "" {
-		return nil, fmt.Errorf("github repo is required")
-	}
-	if strings.TrimSpace(cfg.Workflow) == "" {
-		return nil, fmt.Errorf("github workflow is required")
-	}
-	if strings.TrimSpace(cfg.Ref) == "" {
-		cfg.Ref = "main"
-	}
-	if strings.TrimSpace(cfg.Token) == "" {
-		return nil, fmt.Errorf("github token is required")
-	}
-	if strings.TrimSpace(cfg.BaseURL) == "" {
-		cfg.BaseURL = "https://api.github.com"
-	}
+
 	if client == nil {
 		client = &http.Client{Timeout: 10 * time.Second}
 	}
@@ -65,12 +51,11 @@ func (d *GithubActionsDispatcher) Dispatch(ctx context.Context, req domain.Execu
 	payload := dispatchPayload{
 		Ref: d.cfg.Ref,
 		Inputs: map[string]string{
-			// "job_id": req.ID,
-			// "language": req.Language,
-			// "code": req.Code,
-			// "input": req.Input,
-			// "created_at": req.CreatedAt.Format(time.RFC3339),
-			"message": "hello welcome to my world",
+			"job_id": req.ID,
+			"fetch_url": d.cfg.FetchURL,
+			"fetch_secret": d.cfg.FetchSecret,
+			"callback_url": fmt.Sprintf(d.cfg.CallbackURL, req.ID),
+			"callback_secret": d.cfg.CallbackSecret,
 		},
 	}
 	body, err := json.Marshal(payload)

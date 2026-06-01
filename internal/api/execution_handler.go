@@ -92,17 +92,47 @@ func (h *ExecutionHandler) HandleGetJob(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 	req, err := h.InfoStore.Get(r.Context(), jobID)
-	if req == nil {
-		helperWriteJSONError(w, http.StatusNotFound, "job unavailable")
-		return
-	}
 	if err != nil {
 		helperWriteJSONError(w, http.StatusInternalServerError, "something went wrong")
+		return
+	}
+	if req == nil {
+		helperWriteJSONError(w, http.StatusNotFound, "job unavailable")
 		return
 	}
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(req)
+}
+
+func (h *ExecutionHandler) HandlePostResult(w http.ResponseWriter, r *http.Request) {
+    jobID := r.PathValue("id")
+
+    secret := helperGetSecret(r.Header.Get("Authorization"))
+    if h.CallbackSecret != secret {
+        helperWriteJSONError(w, http.StatusUnauthorized, "unauthorized")
+        return
+    }
+
+    var resp domain.ExecutionResponse
+    if err := json.NewDecoder(r.Body).Decode(&resp); err != nil {
+        helperWriteJSONError(w, http.StatusBadRequest, "invalid request")
+        return
+    }
+
+    resp.ID = jobID
+
+    if err := h.ResultStore.Set(r.Context(), resp); err != nil {
+        helperWriteJSONError(w, http.StatusInternalServerError, "failed to save result")
+        return
+    }
+
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(http.StatusOK)
+    json.NewEncoder(w).Encode(map[string]string{
+        "job_id": jobID,
+        "status": "stored",
+    })
 }
 
 func helperGetSecret(s string) string {

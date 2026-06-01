@@ -49,6 +49,7 @@ func main() {
 	mux.HandleFunc("POST /api/execute", executionHandler.HandleExecuteCode)
 	mux.HandleFunc("GET /api/result/{id}", executionHandler.HandleGetResult)
 	mux.HandleFunc("GET /api/jobs/{id}", executionHandler.HandleGetJob)
+	mux.HandleFunc("POST /api/jobs/{id}/result", executionHandler.HandlePostResult)
 	log.Printf("Server started at %s", port)
 	http.ListenAndServe(":"+port, enableCORS(mux))
 }
