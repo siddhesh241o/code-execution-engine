@@ -78,6 +78,7 @@ func (d *GithubActionsDispatcher) Dispatch(ctx context.Context, req domain.Execu
 	httpReq.Header.Set("Accept", "application/vnd.github+json")
 	httpReq.Header.Set("X-GitHub-Api-Version", "2022-11-28")
 	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("User-Agent", "Go-HTTP-Client/1.1") // Add User-Agent
 	resp, err := d.httpClient.Do(httpReq)
 	if err != nil {
 		return fmt.Errorf("github dispatch request failed: %w", err)

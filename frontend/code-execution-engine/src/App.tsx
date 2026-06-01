@@ -2,6 +2,8 @@ import { useState } from 'react'
 import { CodeEditor } from './components/CodeEditor'
 import { InputPanel } from './components/InputPanel'
 import { ResultPanel } from './components/ResultPanel'
+import { executeCode, pollResult } from './api/execution'
+
 type ExecutionResult = {
   status: string
   stdout?: string
@@ -12,28 +14,31 @@ type ExecutionResult = {
 
 export default function App() {
   const [code, setCode] = useState(`print("Hello world")`)
-  const [language, setLanguage] = useState<'python' | 'javascript' | 'cpp'>('python')
+  const [language, setLanguage] = useState<'python' | 'javascript' | 'cpp' >('python')
   const [programInput, setProgramInput] = useState("")
   const [result, setResult] = useState<ExecutionResult | null>(null)
   const [isRunning, setIsRunning] = useState(false)
   const [errorMessage, setErrorMessage] = useState("")
+
   const handleRunCode = async () => {
     setIsRunning(true)
     setErrorMessage("")
-    setResult({ status: "Processing" })
+    setResult({ status: "Queued" })
+
+    // Map frontend language IDs to backend IDs
+    const backendLanguage = language === 'cpp' ? 'c++' : language;
 
     try {
-      await new Promise((resolve) => setTimeout(resolve, 900))
-
-      setResult({
-        status: "Successfully Executed",
-        stdout: `Language: ${language}\nInput: ${programInput || "(empty)"}\n\nCode received:\n${code}`,
-        stderr: "",
-        time_ms: 32,
-        memory_kb: 4096,
+      const { job_id } = await executeCode({
+        code,
+        language: backendLanguage,
+        input: programInput,
       })
-    } catch {
-      setErrorMessage("Something went wrong while running code.")
+
+      const finalResult = await pollResult(job_id)
+      setResult(finalResult)
+    } catch (error: any) {
+      setErrorMessage(error.message || "Something went wrong while running code.")
       setResult(null)
     } finally {
       setIsRunning(false)
@@ -43,7 +48,7 @@ export default function App() {
     <main className="app-shell">
       <header className="mb-4 md:mb-6">
         <h1 className="page-title">Code Playground</h1>
-        <p className="page-subtitle">Write, run, and iterate quickly. Keep this layout and reuse the editor in future challenge screens.</p>
+        <p className="page-subtitle">Write, run, and iterate quickly.</p>
       </header>
 
       <section className="grid gap-4 lg:grid-cols-[1fr_320px]">
@@ -63,7 +68,7 @@ export default function App() {
         <div className="grid gap-4">
           <aside className="panel p-4">
             <h2 className="text-sm font-semibold tracking-wide">Actions</h2>
-            <p className="mt-2 text-sm text-muted">This is your future run and output area. Keep it as a placeholder while you build editor behavior first.</p>
+            <p className="mt-2 text-sm text-muted">Run Code</p>
             <button
               type="button"
               className="btn-primary mt-4 w-full disabled:opacity-60"

@@ -20,7 +20,7 @@ func enableCORS(next http.Handler) http.Handler {
 		corsOrigin := os.Getenv("CORS_ORIGIN")
 		w.Header().Set("Access-Control-Allow-Origin", corsOrigin)
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, ngrok-skip-browser-warning")
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return
