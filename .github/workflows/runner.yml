@@ -3,10 +3,12 @@ name: Code Runner
 on:
   workflow_dispatch:
     inputs:
-      message:
-        description: A message from Go script
+      language:
+        description: Programming language 
         required: true
-        default: "Hello World"
+        default: python 
+      source:
+        description: Base64-encoded source
 
 jobs:
   print-message:

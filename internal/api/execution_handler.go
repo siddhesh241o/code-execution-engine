@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	"net/http"
@@ -12,11 +13,20 @@ import (
 
 type ExecutionHandler struct {
 	Dispatcher domain.SubmissionDispatcher
-	Store      domain.JobStateStore
+	ResultStore      domain.JobStateStore
+	InfoStore 		 domain.JobInfoStore
+	FetchSecret		 string 
+	CallbackSecret   string
 }
 
-func NewExecutionHandler(d domain.SubmissionDispatcher, s domain.JobStateStore) *ExecutionHandler {
-	return &ExecutionHandler{Dispatcher: d, Store: s}
+func NewExecutionHandler(d domain.SubmissionDispatcher, s domain.JobStateStore, i domain.JobInfoStore, f, c string) *ExecutionHandler {
+	return &ExecutionHandler{
+		Dispatcher: d,
+		ResultStore: s,
+		InfoStore: i,
+		FetchSecret: f,
+		CallbackSecret: c,
+	}
 }
 
 func (h *ExecutionHandler) HandleExecuteCode(w http.ResponseWriter, r *http.Request) {
@@ -37,7 +47,12 @@ func (h *ExecutionHandler) HandleExecuteCode(w http.ResponseWriter, r *http.Requ
 		Input:     req.Input,
 		CreatedAt: time.Now(),
 	}
-	err := h.Dispatcher.Dispatch(r.Context(), executionJob)
+	err := h.InfoStore.Set(r.Context(), executionJob)
+	if err != nil {
+		http.Error(w, "Something went wrong: "+ err.Error(), http.StatusInternalServerError)
+		return
+	}
+	err = h.Dispatcher.Dispatch(r.Context(), executionJob)
 	if err != nil {
 		http.Error(w, "Submission failed to dispatch: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -52,7 +67,7 @@ func (h *ExecutionHandler) HandleExecuteCode(w http.ResponseWriter, r *http.Requ
 
 func (h *ExecutionHandler) HandleGetResult(w http.ResponseWriter, r *http.Request) {
 	jobID := r.PathValue("id")
-	result, err := h.Store.Get(r.Context(), jobID)
+	result, err := h.ResultStore.Get(r.Context(), jobID)
 	if err != nil {
 		http.Error(w, "result store failed "+err.Error(), http.StatusInternalServerError)
 		return
@@ -67,4 +82,36 @@ func (h *ExecutionHandler) HandleGetResult(w http.ResponseWriter, r *http.Reques
 		return
 	}
 	json.NewEncoder(w).Encode(result)
+}
+
+func (h *ExecutionHandler) HandleGetJob(w http.ResponseWriter, r *http.Request) {
+	jobID := r.PathValue("id")
+	secret := helperGetSecret(r.Header.Get("Authorization"))
+	if h.FetchSecret != secret {
+		helperWriteJSONError(w, http.StatusUnauthorized, "unauthorized action")
+		return
+	}
+	req, err := h.InfoStore.Get(r.Context(), jobID)
+	if req == nil {
+		helperWriteJSONError(w, http.StatusNotFound, "job unavailable")
+		return
+	}
+	if err != nil {
+		helperWriteJSONError(w, http.StatusInternalServerError, "something went wrong")
+		return
+	}
+	w.Header().Set("Content-type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(req)
+}
+
+func helperGetSecret(s string) string {
+	s = strings.TrimSpace(s)
+	return strings.TrimSpace(strings.TrimPrefix(s, "Bearer"))
+}
+
+func helperWriteJSONError(w http.ResponseWriter, status int, msg string) {
+    w.Header().Set("Content-Type", "application/json")
+    w.WriteHeader(status)
+    json.NewEncoder(w).Encode(map[string]string{"error": msg})
 }

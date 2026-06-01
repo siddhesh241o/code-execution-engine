@@ -29,6 +29,8 @@ func main() {
 	_ = godotenv.Load()
 	redisAddr := os.Getenv("REDIS_ADDR")
 	ttlStr := os.Getenv("RESULT_TTL")
+	fetchSecret := os.Getenv("FETCH_SECRET")
+	callbackSecret := os.Getenv("CALLBACK_SECRET")
 	ttl, err := time.ParseDuration(ttlStr)
 	if err != nil {
 		log.Fatalf("invalid RESULT_TTL: %v", err)
@@ -41,10 +43,12 @@ func main() {
 	}
 	queue := submission.NewQueueSubmissionDispatcher(redis.NewRedisQueue(rdb))
 	store := redis.NewRedisResultStore(rdb, ttl)
-	executionHandler := api.NewExecutionHandler(queue, store)
+	jobInfo := redis.NewRedisJobInfoStore(rdb, ttl)
+	executionHandler := api.NewExecutionHandler(queue, store, jobInfo, fetchSecret, callbackSecret)
 	mux := http.NewServeMux()
 	mux.HandleFunc("POST /api/execute", executionHandler.HandleExecuteCode)
 	mux.HandleFunc("GET /api/result/{id}", executionHandler.HandleGetResult)
+	mux.HandleFunc("GET /api/jobs/{id}", executionHandler.HandleGetJob)
 	log.Printf("Server started at %s", port)
 	http.ListenAndServe(":"+port, enableCORS(mux))
 }
