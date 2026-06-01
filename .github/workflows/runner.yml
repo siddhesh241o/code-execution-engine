@@ -56,11 +56,13 @@ jobs:
           echo "--- Phase 3: Executing ---"
           OUT_FILE=$(mktemp)
           ERR_FILE=$(mktemp)
+          METRICS_FILE=$(mktemp) # New file for memory metrics
           START_TIME=$(date +%s%N)
 
           if [ -z "$STATUS" ]; then
             set +e
-            timeout --preserve-status "${TIMEOUT_SEC}s" bash -c "printf '%s' \"$STDIN\" | $RUN_CMD" >"$OUT_FILE" 2>"$ERR_FILE"
+            # Wrap the command with /usr/bin/time -v
+            timeout --preserve-status "${TIMEOUT_SEC}s" /usr/bin/time -v -o "$METRICS_FILE" bash -c "printf '%s' \"$STDIN\" | $RUN_CMD" >"$OUT_FILE" 2>"$ERR_FILE"
             EXIT_CODE=$?
             set -e
 
@@ -76,6 +78,9 @@ jobs:
           END_TIME=$(date +%s%N)
           DURATION_MS=$(( (END_TIME - START_TIME) / 1000000 ))
 
+          MEM_KB=$(grep "Maximum resident set size" "$METRICS_FILE" | awk '{print $6}')
+          if [ -z "$MEM_KB" ]; then MEM_KB=0; fi
+
           echo "--- Phase 4: Posting Result ---"
           PAYLOAD=$(jq -n \
             --arg id "$JOB_ID" \
@@ -83,7 +88,8 @@ jobs:
             --arg stderr "$(head -c 10000 "$ERR_FILE")" \
             --arg status "$STATUS" \
             --argjson duration "$DURATION_MS" \
-            '{id: $id, stdout: $stdout, stderr: $stderr, status: $status, time_ms: $duration}')
+            --argjson memory "$MEM_KB" \
+            '{id: $id, stdout: $stdout, stderr: $stderr, status: $status, time_ms: $duration, memory_kb: $memory}')
 
           curl -sS -f -X POST \
             -H "Content-Type: application/json" \

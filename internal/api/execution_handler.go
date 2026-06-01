@@ -12,19 +12,19 @@ import (
 )
 
 type ExecutionHandler struct {
-	Dispatcher domain.SubmissionDispatcher
-	ResultStore      domain.JobStateStore
-	InfoStore 		 domain.JobInfoStore
-	FetchSecret		 string 
-	CallbackSecret   string
+	Dispatcher     domain.SubmissionDispatcher
+	ResultStore    domain.JobStateStore
+	InfoStore      domain.JobInfoStore
+	FetchSecret    string
+	CallbackSecret string
 }
 
 func NewExecutionHandler(d domain.SubmissionDispatcher, s domain.JobStateStore, i domain.JobInfoStore, f, c string) *ExecutionHandler {
 	return &ExecutionHandler{
-		Dispatcher: d,
-		ResultStore: s,
-		InfoStore: i,
-		FetchSecret: f,
+		Dispatcher:     d,
+		ResultStore:    s,
+		InfoStore:      i,
+		FetchSecret:    f,
 		CallbackSecret: c,
 	}
 }
@@ -49,7 +49,7 @@ func (h *ExecutionHandler) HandleExecuteCode(w http.ResponseWriter, r *http.Requ
 	}
 	err := h.InfoStore.Set(r.Context(), executionJob)
 	if err != nil {
-		http.Error(w, "Something went wrong: "+ err.Error(), http.StatusInternalServerError)
+		http.Error(w, "Something went wrong: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	err = h.Dispatcher.Dispatch(r.Context(), executionJob)
@@ -106,33 +106,33 @@ func (h *ExecutionHandler) HandleGetJob(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *ExecutionHandler) HandlePostResult(w http.ResponseWriter, r *http.Request) {
-    jobID := r.PathValue("id")
+	jobID := r.PathValue("id")
 
-    secret := helperGetSecret(r.Header.Get("Authorization"))
-    if h.CallbackSecret != secret {
-        helperWriteJSONError(w, http.StatusUnauthorized, "unauthorized")
-        return
-    }
+	secret := helperGetSecret(r.Header.Get("Authorization"))
+	if h.CallbackSecret != secret {
+		helperWriteJSONError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
 
-    var resp domain.ExecutionResponse
-    if err := json.NewDecoder(r.Body).Decode(&resp); err != nil {
-        helperWriteJSONError(w, http.StatusBadRequest, "invalid request")
-        return
-    }
+	var resp domain.ExecutionResponse
+	if err := json.NewDecoder(r.Body).Decode(&resp); err != nil {
+		helperWriteJSONError(w, http.StatusBadRequest, "invalid request")
+		return
+	}
 
-    resp.ID = jobID
+	resp.ID = jobID
 
-    if err := h.ResultStore.Set(r.Context(), resp); err != nil {
-        helperWriteJSONError(w, http.StatusInternalServerError, "failed to save result")
-        return
-    }
+	if err := h.ResultStore.Set(r.Context(), resp); err != nil {
+		helperWriteJSONError(w, http.StatusInternalServerError, "failed to save result")
+		return
+	}
 
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(http.StatusOK)
-    json.NewEncoder(w).Encode(map[string]string{
-        "job_id": jobID,
-        "status": "stored",
-    })
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{
+		"job_id": jobID,
+		"status": "stored",
+	})
 }
 
 func helperGetSecret(s string) string {
@@ -141,7 +141,7 @@ func helperGetSecret(s string) string {
 }
 
 func helperWriteJSONError(w http.ResponseWriter, status int, msg string) {
-    w.Header().Set("Content-Type", "application/json")
-    w.WriteHeader(status)
-    json.NewEncoder(w).Encode(map[string]string{"error": msg})
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(map[string]string{"error": msg})
 }

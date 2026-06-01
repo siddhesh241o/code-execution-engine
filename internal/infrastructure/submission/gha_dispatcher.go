@@ -13,15 +13,15 @@ import (
 )
 
 type GithubActionsConfig struct {
-	Owner    string
-	Repo     string
-	Workflow string
-	Ref      string
-	Token    string
-	BaseURL  string
-	FetchURL string 
-	CallbackURL string 
-	FetchSecret string 
+	Owner          string
+	Repo           string
+	Workflow       string
+	Ref            string
+	Token          string
+	BaseURL        string
+	FetchURL       string
+	CallbackURL    string
+	FetchSecret    string
 	CallbackSecret string
 }
 
@@ -51,10 +51,10 @@ func (d *GithubActionsDispatcher) Dispatch(ctx context.Context, req domain.Execu
 	payload := dispatchPayload{
 		Ref: d.cfg.Ref,
 		Inputs: map[string]string{
-			"job_id": req.ID,
-			"fetch_url": d.cfg.FetchURL,
-			"fetch_secret": d.cfg.FetchSecret,
-			"callback_url": fmt.Sprintf(d.cfg.CallbackURL, req.ID),
+			"job_id":          req.ID,
+			"fetch_url":       d.cfg.FetchURL,
+			"fetch_secret":    d.cfg.FetchSecret,
+			"callback_url":    fmt.Sprintf(d.cfg.CallbackURL, req.ID),
 			"callback_secret": d.cfg.CallbackSecret,
 		},
 	}

@@ -63,6 +63,6 @@ type JobStateStore interface {
 }
 
 type JobInfoStore interface {
-	Set(ctx context.Context, req ExecutionRequest) error 
+	Set(ctx context.Context, req ExecutionRequest) error
 	Get(ctx context.Context, id string) (*ExecutionRequest, error)
 }
