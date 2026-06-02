@@ -13,6 +13,9 @@ jobs:
   execute:
     runs-on: ubuntu-latest
     steps:
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y time
+
       - name: Runner Script
         run: |
           set -euo pipefail
@@ -47,8 +50,13 @@ jobs:
               g++ runner/main.cpp -O2 -std=c++17 -o runner/main || { STATUS="Compilation Error"; }
               RUN_CMD="./runner/main"
               ;;
+            go)
+              printf "%s" "$CODE" > runner/main.go
+              go build -o runner/main runner/main.go || { STATUS="Compilation Error"; }
+              RUN_CMD="./runner/main"
+              ;;
             *)
-              echo "Unsupported language: $LANG (only python and cpp supported)"
+              echo "Unsupported language: $LANG"
               exit 1
               ;;
           esac
@@ -56,13 +64,19 @@ jobs:
           echo "--- Phase 3: Executing ---"
           OUT_FILE=$(mktemp)
           ERR_FILE=$(mktemp)
-          METRICS_FILE=$(mktemp) # New file for memory metrics
+          METRICS_FILE=$(mktemp)
           START_TIME=$(date +%s%N)
 
           if [ -z "$STATUS" ]; then
             echo -n "$STDIN" > runner/input.txt
+            
+            # Prevent runaway code from filling the runner's disk (limits written files to ~10MB)
+            ulimit -f 10240 
+
             set +e
-            timeout -k 2s "${TIMEOUT_SEC}s" /usr/bin/time -v -o "$METRICS_FILE" $RUN_CMD < runner/input.txt >"$OUT_FILE" 2>"$ERR_FILE"
+            # Swapped order: /usr/bin/time now wraps timeout. 
+            # This ensures time always finishes and writes to METRICS_FILE, even on TLE.
+            /usr/bin/time -v -o "$METRICS_FILE" timeout -k 2s "${TIMEOUT_SEC}s" $RUN_CMD < runner/input.txt >"$OUT_FILE" 2>"$ERR_FILE"
             EXIT_CODE=$?
             set -e
 
@@ -78,7 +92,8 @@ jobs:
           END_TIME=$(date +%s%N)
           DURATION_MS=$(( (END_TIME - START_TIME) / 1000000 ))
 
-          MEM_KB=$(grep "Maximum resident set size" "$METRICS_FILE" | awk '{print $6}')
+          # Fallback '|| echo "0"' prevents set -e from crashing the script if grep fails
+          MEM_KB=$(grep "Maximum resident set size" "$METRICS_FILE" | awk '{print $6}' || echo "0")
           if [ -z "$MEM_KB" ]; then MEM_KB=0; fi
 
           echo "--- Phase 4: Posting Result ---"
