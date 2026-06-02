@@ -193,7 +193,7 @@ func (de *DockerExecutor) runInContainer(ctx context.Context, languageConfig Lan
 		if input != "" {
 			_, _ = io.WriteString(waiter.Conn, input)
 		}
-		waiter.CloseWrite()
+		_ = waiter.CloseWrite()
 	}()
 
 	runCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
@@ -210,7 +210,7 @@ func (de *DockerExecutor) runInContainer(ctx context.Context, languageConfig Lan
 			return nil, fmt.Errorf("failed waiting for container: %v", err)
 		}
 	case <-runCtx.Done():
-		de.cli.ContainerKill(context.Background(), resp.ID, client.ContainerKillOptions{Signal: "SIGKILL"})
+		_, _ = de.cli.ContainerKill(context.Background(), resp.ID, client.ContainerKillOptions{Signal: "SIGKILL"})
 	case <-wait.Result:
 	}
 
@@ -254,7 +254,7 @@ func (de *DockerExecutor) Execute(ctx context.Context, req domain.ExecutionReque
 	}
 
 	metricsPath := filepath.Join(workdir, "metrics.txt")
-	metricsData, err := os.ReadFile(metricsPath)
+	metricsData, err := os.ReadFile(filepath.Clean(metricsPath))
 	if err != nil {
 		return &domain.ExecutionResponse{
 			Stdout: result.Stdout,
@@ -309,6 +309,6 @@ func (de *DockerExecutor) getOutputLogs(containerID string) (stdout string, stde
 	if errLimiter.N <= 0 {
 		stderr += "\n[ERROR LOG TRUNCATED]"
 	}
-	logs.Close()
+	_ = logs.Close()
 	return
 }

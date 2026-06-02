@@ -19,11 +19,12 @@ func (fm *FileManager) CreateWorkspace(code string, filename string) (string, fu
 		return "", nil, fmt.Errorf("failed to created tmp directory: %v", err)
 	}
 	cleanup := func() {
-		os.RemoveAll(workdir)
+		_ = os.RemoveAll(workdir)
 	}
 
 	filePath := filepath.Join(workdir, filename)
-	if err = os.WriteFile(filePath, []byte(code), 0644); err != nil {
+	if err = os.WriteFile(filePath, []byte(code), 0600); err != nil {
+		cleanup()
 		return "", nil, fmt.Errorf("failed to created code file: %v", err)
 	}
 	return workdir, cleanup, err
