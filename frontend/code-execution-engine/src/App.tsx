@@ -14,7 +14,7 @@ type ExecutionResult = {
 
 export default function App() {
   const [code, setCode] = useState(`print("Hello world")`)
-  const [language, setLanguage] = useState<'python' | 'javascript' | 'cpp' >('python')
+  const [language, setLanguage] = useState<'python' | 'go' | 'cpp' >('python')
   const [programInput, setProgramInput] = useState("")
   const [result, setResult] = useState<ExecutionResult | null>(null)
   const [isRunning, setIsRunning] = useState(false)

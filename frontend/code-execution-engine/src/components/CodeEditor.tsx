@@ -1,7 +1,7 @@
 import Editor from '@monaco-editor/react'
 import type { editor } from 'monaco-editor'
 
-type Language = 'python' | 'cpp' | 'javascript'
+type Language = 'python' | 'cpp' | 'go'
 
 interface CodeEditorProps {
     value: string 
@@ -15,7 +15,7 @@ interface CodeEditorProps {
 const monacoLanguageMap: Record<Language, string> = {
     python: 'python',
     cpp: 'cpp',
-    javascript: 'javascript',
+    go: 'go',
 }
 
 const editorOptions: editor.IStandaloneEditorConstructionOptions = {
@@ -39,7 +39,10 @@ export function CodeEditor({
     return (
         <div className="panel overflow-hidden">
             <div className="panel-head">
-                <h2 className="text-sm font-semibold tracking-wide">{title}</h2>
+                <div>
+                    <h2 className="section-title">{title}</h2>
+                    <p className="section-caption">Select a language and write code.</p>
+                </div>
                 <select 
                 className="field"
                 value={language}
@@ -52,7 +55,7 @@ export function CodeEditor({
             </div>
             <Editor
                 height="420px"
-                theme="vs-dark"
+                theme="vs-light"
                 language={monacoLanguage}
                 value={value}
                 options={{ ...editorOptions, readOnly }}

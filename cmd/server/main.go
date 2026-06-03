@@ -23,7 +23,7 @@ func enableCORS(next http.Handler) http.Handler {
 		corsOrigin := os.Getenv("CORS_ORIGIN")
 		w.Header().Set("Access-Control-Allow-Origin", corsOrigin)
 		w.Header().Set("Access-Control-Allow-Methods", "POST, GET, OPTIONS, PUT, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, ngrok-skip-browser-warning")
+		w.Header().Set("Access-Control-Allow-Headers", "Accept, Content-Type, Content-Length, Accept-Encoding, Authorization, X-Frontend-Secret, ngrok-skip-browser-warning")
 		if r.Method == "OPTIONS" {
 			w.WriteHeader(http.StatusOK)
 			return
@@ -37,6 +37,8 @@ func main() {
 	ttlStr := os.Getenv("RESULT_TTL")
 	fetchSecret := os.Getenv("FETCH_SECRET")
 	callbackSecret := os.Getenv("CALLBACK_SECRET")
+	frontendSecret := os.Getenv("FRONTEND_SHARED_SECRET")
+	corsOrigin := os.Getenv("CORS_ORIGIN")
 	storeMode := os.Getenv("STORE_MODE")
 	ttl, err := time.ParseDuration(ttlStr)
 	if err != nil {
@@ -84,7 +86,7 @@ func main() {
 	})
 	server := &http.Server{
 		Addr:         ":" + port,
-		Handler:      enableCORS(api.RateLimit(mux)),
+		Handler:      enableCORS(api.RateLimit(api.RequireFrontendAuth(mux, frontendSecret, corsOrigin))),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,

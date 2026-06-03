@@ -1,4 +1,11 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5005';
+const FRONTEND_SHARED_SECRET = import.meta.env.VITE_FRONTEND_SHARED_SECRET || '';
+
+const buildHeaders = (extraHeaders: Record<string, string> = {}) => ({
+  'X-Frontend-Secret': FRONTEND_SHARED_SECRET,
+  'ngrok-skip-browser-warning': 'true',
+  ...extraHeaders,
+});
 
 export interface ExecutionRequest {
   code: string;
@@ -23,10 +30,9 @@ export interface JobStatus {
 export const executeCode = async (req: ExecutionRequest): Promise<JobStatus> => {
   const response = await fetch(`${API_BASE_URL}/api/execute`, {
     method: 'POST',
-    headers: {
+    headers: buildHeaders({
       'Content-Type': 'application/json',
-      'ngrok-skip-browser-warning': 'true',
-    },
+    }),
     body: JSON.stringify(req),
   });
 
@@ -40,9 +46,7 @@ export const executeCode = async (req: ExecutionRequest): Promise<JobStatus> => 
 
 export const getResult = async (jobId: string): Promise<ExecutionResponse | JobStatus> => {
   const response = await fetch(`${API_BASE_URL}/api/result/${jobId}`, {
-    headers: {
-      'ngrok-skip-browser-warning': 'true',
-    }
+    headers: buildHeaders(),
   });
 
   if (!response.ok) {

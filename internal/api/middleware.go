@@ -3,6 +3,7 @@ package api
 import (
 	"net"
 	"net/http"
+	"strings"
 	"sync"
 	"time"
 
@@ -38,7 +39,7 @@ func cleanupClients() {
 
 func RateLimit(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/health" || r.URL.Path == "/metrics" {
+		if !(r.URL.Path == "/api/execute") {
 			next.ServeHTTP(w, r)
 			return
 		}
@@ -60,6 +61,35 @@ func RateLimit(next http.Handler) http.Handler {
 			return
 		}
 		mu.Unlock()
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func RequireFrontendAuth(next http.Handler, expectedSecret string, allowedOrigin string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if !(r.URL.Path == "/api/execute") {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		if expectedSecret == "" {
+			http.Error(w, "frontend auth is not configured", http.StatusServiceUnavailable)
+			return
+		}
+
+		if allowedOrigin != "" {
+			origin := strings.TrimSpace(r.Header.Get("Origin"))
+			if origin != "" && origin != allowedOrigin {
+				http.Error(w, "forbidden origin", http.StatusForbidden)
+				return
+			}
+		}
+
+		if r.Header.Get("X-Frontend-Secret") != expectedSecret {
+			http.Error(w, "unauthorized", http.StatusUnauthorized)
+			return
+		}
 
 		next.ServeHTTP(w, r)
 	})

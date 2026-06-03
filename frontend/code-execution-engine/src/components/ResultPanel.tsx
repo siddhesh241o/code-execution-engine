@@ -34,8 +34,11 @@ export function ResultPanel({
   return (
     <section className="panel overflow-hidden">
       <div className="panel-head">
-        <h3 className="text-sm font-semibold tracking-wide">{title}</h3>
-        <span className={`text-xs font-medium ${getStatusClass(statusText)}`}>
+        <div>
+          <h3 className="section-title">{title}</h3>
+          <p className="section-caption">Program output and execution summary.</p>
+        </div>
+        <span className={`status-pill ${getStatusClass(statusText)}`}>
           {statusText}
         </span>
       </div>
@@ -48,38 +51,34 @@ export function ResultPanel({
         )}
 
         {errorMessage && (
-          <div className="error-box">
-            {errorMessage}
-          </div>
+          <div className="notice notice-error">{errorMessage}</div>
         )}
 
-        {(result?.stdout ?? "").length > 0 && (
-          <div>
+        <div className="output-stack">
+          <div className="output-card">
             <p className="output-label">stdout</p>
             <pre className="output-block">
-              {result?.stdout}
+              {result?.stdout?.trim() ? result.stdout : "No standard output."}
             </pre>
           </div>
-        )}
 
-        {(result?.stderr ?? "").length > 0 && (
-          <div>
+          <div className="output-card">
             <p className="output-label">stderr</p>
             <pre className="output-block output-block-error">
-              {result?.stderr}
+              {result?.stderr?.trim() ? result.stderr : "No error output."}
             </pre>
           </div>
-        )}
-        
+        </div>
+
         {result && (
-          <div className="grid grid-cols-2 gap-2 text-sm">
+          <div className="metrics-grid text-sm">
             <div className="metric-card">
-              <p className="text-xs text-muted">Time</p>
-              <p>{result.time_ms ?? "-"} ms</p>
+              <p className="metric-label">Time</p>
+              <p className="metric-value">{result.time_ms ?? "-"} ms</p>
             </div>
             <div className="metric-card">
-              <p className="text-xs text-muted">Memory</p>
-              <p>{result.memory_kb ?? "-"} KB</p>
+              <p className="metric-label">Memory</p>
+              <p className="metric-value">{result.memory_kb ?? "-"} KB</p>
             </div>
           </div>
         )}
