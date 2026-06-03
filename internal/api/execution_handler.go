@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/siddhesh241o/code-execution-engine/internal/domain"
+	"github.com/siddhesh241o/code-execution-engine/internal/observability"
 )
 
 type ExecutionHandler struct {
@@ -37,9 +38,20 @@ func (h *ExecutionHandler) HandleExecuteCode(w http.ResponseWriter, r *http.Requ
 		Input    string `json:"input"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid request", http.StatusBadRequest)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
+
+	req.Language = strings.ToLower(strings.TrimSpace(req.Language))
+	if req.Language == "" {
+		http.Error(w, "Language is required", http.StatusUnprocessableEntity)
+		return
+	}
+	if strings.TrimSpace(req.Code) == "" {
+		http.Error(w, "Code cannot be empty", http.StatusUnprocessableEntity)
+		return
+	}
+
 	jobID := uuid.New().String()
 	executionJob := domain.ExecutionRequest{
 		ID:        jobID,
@@ -125,13 +137,17 @@ func (h *ExecutionHandler) HandlePostResult(w http.ResponseWriter, r *http.Reque
 	}
 
 	resp.ID = jobID
+	language := "unknown"
+	if req, err := h.InfoStore.Get(r.Context(), jobID); err == nil && req != nil {
+		language = req.Language
+	}
+	observability.RecordExecution(language, resp.Status, resp.Duration)
 
 	if err := h.ResultStore.Set(r.Context(), resp); err != nil {
 		slog.Error("failed to save job result", "jobID", jobID, "error", err)
 		helperWriteJSONError(w, http.StatusInternalServerError, "failed to save result")
 		return
 	}
-
 	slog.Info("Job result received and stored", "jobID", jobID, "status", resp.Status)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)

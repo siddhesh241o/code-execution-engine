@@ -15,6 +15,7 @@ import (
 	"github.com/siddhesh241o/code-execution-engine/internal/infrastructure/memory"
 	"github.com/siddhesh241o/code-execution-engine/internal/infrastructure/redis"
 	"github.com/siddhesh241o/code-execution-engine/internal/infrastructure/submission"
+	"github.com/siddhesh241o/code-execution-engine/internal/observability"
 )
 
 func enableCORS(next http.Handler) http.Handler {
@@ -76,19 +77,20 @@ func main() {
 	mux.HandleFunc("GET /api/result/{id}", executionHandler.HandleGetResult)
 	mux.HandleFunc("GET /api/jobs/{id}", executionHandler.HandleGetJob)
 	mux.HandleFunc("POST /api/jobs/{id}/result", executionHandler.HandlePostResult)
+	mux.Handle("GET /metrics", observability.Handler())
 	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("ok"))
 	})
 	server := &http.Server{
 		Addr:         ":" + port,
-		Handler:      enableCORS(mux),
+		Handler:      enableCORS(api.RateLimit(mux)),
 		ReadTimeout:  10 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
 
-	slog.Info("Server started", "mode", mode) // Remove port from log
+	slog.Info("Server started", "mode", mode)
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		slog.Error("Server failed", "error", err)
 		os.Exit(1)

@@ -12,6 +12,7 @@ import (
 	"github.com/moby/moby/client"
 	"github.com/siddhesh241o/code-execution-engine/internal/domain"
 	infraRedis "github.com/siddhesh241o/code-execution-engine/internal/infrastructure/redis"
+	"github.com/siddhesh241o/code-execution-engine/internal/observability"
 	"github.com/siddhesh241o/code-execution-engine/internal/runner"
 )
 
@@ -29,6 +30,7 @@ func workerLoop(workerId int, queue *infraRedis.RedisQueue, store *infraRedis.Re
 		result, err := executor.Execute(ctx, job)
 		if err != nil {
 			log.Printf("Worker_%d failed job execution %s: %v", workerId, job.ID, err)
+			observability.RecordExecution(job.Language, domain.StatusSystemError.String(), 0)
 			store.Set(ctx, domain.ExecutionResponse{
 				ID:     job.ID,
 				Status: domain.StatusSystemError.String(),
@@ -36,8 +38,10 @@ func workerLoop(workerId int, queue *infraRedis.RedisQueue, store *infraRedis.Re
 			continue
 		}
 		result.ID = job.ID
+		observability.RecordExecution(job.Language, result.Status, result.Duration)
 		if err = store.Set(ctx, *result); err != nil {
 			log.Printf("Worker_%d failed to save result for job_%s: %v", workerId, job.ID, err)
+			continue
 		}
 		log.Printf("Worker_%d completed job_%s", workerId, job.ID)
 	}

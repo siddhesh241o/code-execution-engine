@@ -268,7 +268,7 @@ func (de *DockerExecutor) Execute(ctx context.Context, req domain.ExecutionReque
 	return &domain.ExecutionResponse{
 		Stdout:   result.Stdout,
 		Stderr:   result.Stderr,
-		Duration: time.Duration(duration.Milliseconds()),
+		Duration: duration,
 		Memory:   memoryKB,
 		Status:   de.determineStatus(result.Inspect, result.ctxError, memoryKB).String(),
 	}, nil
