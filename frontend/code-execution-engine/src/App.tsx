@@ -25,8 +25,7 @@ export default function App() {
     setErrorMessage("")
     setResult({ status: "Queued" })
 
-    // Map frontend language IDs to backend IDs
-    const backendLanguage = language === 'cpp' ? 'c++' : language;
+    const backendLanguage = language;
 
     try {
       const { job_id } = await executeCode({

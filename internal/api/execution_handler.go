@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"log/slog"
 	"strings"
 	"time"
 
@@ -49,14 +50,17 @@ func (h *ExecutionHandler) HandleExecuteCode(w http.ResponseWriter, r *http.Requ
 	}
 	err := h.InfoStore.Set(r.Context(), executionJob)
 	if err != nil {
+		slog.Error("failed to set job info", "jobID", jobID, "error", err)
 		http.Error(w, "Something went wrong: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 	err = h.Dispatcher.Dispatch(r.Context(), executionJob)
 	if err != nil {
+		slog.Error("failed to dispatch job", "jobID", jobID, "error", err)
 		http.Error(w, "Submission failed to dispatch: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+	slog.Info("Job dispatched successfully", "jobID", jobID, "language", req.Language)
 	w.Header().Set("Content-type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{
@@ -123,10 +127,12 @@ func (h *ExecutionHandler) HandlePostResult(w http.ResponseWriter, r *http.Reque
 	resp.ID = jobID
 
 	if err := h.ResultStore.Set(r.Context(), resp); err != nil {
+		slog.Error("failed to save job result", "jobID", jobID, "error", err)
 		helperWriteJSONError(w, http.StatusInternalServerError, "failed to save result")
 		return
 	}
 
+	slog.Info("Job result received and stored", "jobID", jobID, "status", resp.Status)
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{

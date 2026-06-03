@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"time"
@@ -50,12 +51,13 @@ func main() {
 	if storeMode == "redis" {
 		rdb, err = redis.NewRedisClient(redisAddr)
 		if err != nil {
-			log.Fatalf("redis connection failed: %v", err)
+			slog.Error("redis connection failed", "error", err)
+			os.Exit(1)
 		}
 		resultStore = redis.NewRedisResultStore(rdb, ttl)
 		jobInfoStore = redis.NewRedisJobInfoStore(rdb, ttl)
 	} else {
-		log.Println("Starting in MEMORY storage mode")
+		slog.Info("Starting in MEMORY storage mode")
 		memProvider = memory.NewInMemoryProvider(ttl)
 		resultStore = &memory.MemoryJobStateStore{P: memProvider}
 		jobInfoStore = &memory.MemoryJobInfoStore{P: memProvider}
@@ -64,7 +66,8 @@ func main() {
 	mode := os.Getenv("EXECUTION_MODE")
 	dispatcher, err := initDispatcher(mode, rdb, memProvider)
 	if err != nil {
-		log.Fatalf("failed to init dispatcher: %v", err)
+		slog.Error("failed to init dispatcher", "error", err)
+		os.Exit(1)
 	}
 
 	executionHandler := api.NewExecutionHandler(dispatcher, resultStore, jobInfoStore, fetchSecret, callbackSecret)
@@ -73,7 +76,10 @@ func main() {
 	mux.HandleFunc("GET /api/result/{id}", executionHandler.HandleGetResult)
 	mux.HandleFunc("GET /api/jobs/{id}", executionHandler.HandleGetJob)
 	mux.HandleFunc("POST /api/jobs/{id}/result", executionHandler.HandlePostResult)
-
+	mux.HandleFunc("GET /health", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	})
 	server := &http.Server{
 		Addr:         ":" + port,
 		Handler:      enableCORS(mux),
@@ -82,9 +88,10 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	log.Printf("Server started in %s mode", mode) // Remove port from log
+	slog.Info("Server started", "mode", mode) // Remove port from log
 	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-		log.Fatalf("Server failed: %v", err)
+		slog.Error("Server failed", "error", err)
+		os.Exit(1)
 	}
 }
 

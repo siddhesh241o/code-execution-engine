@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -89,5 +90,7 @@ func (d *GithubActionsDispatcher) Dispatch(ctx context.Context, req domain.Execu
 		respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
 		return fmt.Errorf("github dispatch failed: status%d body=%s", resp.StatusCode, string(respBody))
 	}
+
+	slog.Info("GitHub Action workflow dispatched", "jobID", req.ID)
 	return nil
 }
