@@ -50,7 +50,7 @@ export function CodeEditor({
                 >
                     <option value="python">Python</option>
                     <option value="cpp">C++</option>
-                    <option value="javascript">Javascript</option>
+                    <option value="go">Go</option>
                 </select>
             </div>
             <Editor
