@@ -17,13 +17,21 @@ var supportedLanguages = map[string]LanguageConfig{
 			"/usr/bin/time -v -o metrics.txt python3 -u solution.py",
 		},
 	},
-	"c++": {
+	"cpp": {
 		Image: "engine-cpp",
 		Command: []string{
 			"sh", "-c",
 			"g++ main.cpp -o app && /usr/bin/time -v -o metrics.txt ./app",
 		},
 		SourceFile: "main.cpp",
+	},
+	"go": {
+		Image: "engine-go",
+		Command: []string{
+			"sh", "-c",
+			"go build -o app main.go && /usr/bin/time -v -o metrics.txt ./app",
+		},
+		SourceFile: "main.go",
 	},
 	"java": {
 		Image: "engine-java",

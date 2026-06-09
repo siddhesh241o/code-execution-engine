@@ -30,6 +30,9 @@ var javaDockerfile string
 //go:embed images/python.Dockerfile
 var pythonDockerfile string
 
+//go:embed images/go.Dockerfile
+var goDockerfile string
+
 //go:embed images/node.Dockerfile
 var nodeDockerfile string
 
@@ -63,6 +66,7 @@ func (de *DockerExecutor) ensureCustomImages() {
 		"engine-cpp":    cppDockerfile,
 		"engine-java":   javaDockerfile,
 		"engine-python": pythonDockerfile,
+		"engine-go":     goDockerfile,
 		"engine-node":   nodeDockerfile,
 	}
 	ctx := context.Background()
